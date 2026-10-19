@@ -1,0 +1,470 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MixedPricingRule {
+  MAX
+  AVERAGE
+  PROPORTIONAL
+}
+
+enum ZoneKind {
+  NEIGHBORHOOD
+  RADIUS
+  POLYGON
+}
+
+enum CategoryKind {
+  PIZZA
+  PRODUCT
+  COMBO
+}
+
+enum Role {
+  NETWORK_ADMIN
+  STORE_MANAGER
+  ATTENDANT
+  KITCHEN
+  COURIER
+}
+
+enum Fulfillment {
+  DELIVERY
+  PICKUP
+}
+
+enum Channel {
+  APP
+  WHATSAPP
+  COUNTER
+  PHONE
+}
+
+enum OrderStatus {
+  AWAITING_PAYMENT
+  RECEIVED
+  CONFIRMED
+  IN_OVEN
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELED
+}
+
+enum PaymentMethod {
+  PIX
+  CARD_ON_DELIVERY
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  REFUNDED
+}
+
+enum OverrideTarget {
+  FLAVOR
+  PRODUCT
+  CRUST
+  ADDON
+  TIER_PRICE
+  COMBO
+}
+
+model Network {
+  id               String           @id @default(cuid())
+  name             String
+  timezone         String           @default("America/Fortaleza")
+  mixedPricingRule MixedPricingRule @default(MAX)
+  primaryColor     String           @default("#b91c1c")
+  tagline          String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  stores           Store[]
+}
+
+model Store {
+  id              String   @id @default(cuid())
+  networkId       String
+  network         Network  @relation(fields: [networkId], references: [id])
+  code            String   @unique
+  name            String
+  label           String
+  slug            String   @unique
+  street          String
+  number          String
+  neighborhood    String
+  city            String
+  state           String
+  lat             Float
+  lng             Float
+  phone           String?
+  isPaused        Boolean  @default(false)
+  pausedReason    String?
+  prepBaseMinutes Int      @default(25)
+  pickupMinutes   Int      @default(30)
+  kitchenCapacity Int      @default(6)
+  active          Boolean  @default(true)
+  sort            Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  hours          StoreHours[]
+  zones          DeliveryZone[]
+  overrides      StoreCatalogOverride[]
+  printers       Printer[]
+  paymentAccount PaymentAccount?
+  orders         Order[]
+  assignments    StaffAssignment[]
+  dailyCounters  OrderCounter[]
+}
+
+/// weekday: 0 = domingo ... 6 = sábado. closesAt may be past midnight (e.g. "00:30").
+model StoreHours {
+  id       String @id @default(cuid())
+  storeId  String
+  store    Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  weekday  Int
+  opensAt  String
+  closesAt String
+
+  @@index([storeId, weekday])
+}
+
+model DeliveryZone {
+  id            String   @id @default(cuid())
+  storeId       String
+  store         Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name          String
+  kind          ZoneKind
+  neighborhoods String[]
+  radiusMeters  Int?
+  /// GeoJSON ring: [[lng, lat], ...]
+  polygon       Json?
+  feeCents      Int
+  minOrderCents Int      @default(0)
+  extraMinutes  Int      @default(0)
+  priority      Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PaymentAccount {
+  id             String   @id @default(cuid())
+  storeId        String   @unique
+  store          Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  provider       String   @default("fake")
+  holderName     String
+  document       String?
+  pixKey         String?
+  /// Encrypted JSON with provider credentials (never returned to the browser).
+  credentialsEnc String?
+  acceptsPix     Boolean  @default(true)
+  acceptsCard    Boolean  @default(true)
+  acceptsCash    Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
+}
+
+model Printer {
+  id      String  @id @default(cuid())
+  storeId String
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name    String
+  kind    String  @default("BROWSER")
+  host    String?
+  port    Int?
+  copies  Int     @default(1)
+  active  Boolean @default(true)
+}
+
+model Category {
+  id       String       @id @default(cuid())
+  name     String
+  kind     CategoryKind
+  sort     Int          @default(0)
+  active   Boolean      @default(true)
+  products Product[]
+  combos   Combo[]
+}
+
+model PizzaSize {
+  id         String      @id @default(cuid())
+  name       String
+  slices     Int?
+  maxFlavors Int
+  sort       Int         @default(0)
+  active     Boolean     @default(true)
+  tierPrices TierPrice[]
+  flavorPrices FlavorSizePrice[]
+  crustPrices  CrustPrice[]
+  addonPrices  AddonPrice[]
+}
+
+model FlavorTier {
+  id      String      @id @default(cuid())
+  name    String
+  sort    Int         @default(0)
+  prices  TierPrice[]
+  flavors Flavor[]
+}
+
+model TierPrice {
+  id         String     @id @default(cuid())
+  tierId     String
+  tier       FlavorTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  sizeId     String
+  size       PizzaSize  @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+  priceCents Int
+
+  @@unique([tierId, sizeId])
+}
+
+model Flavor {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  tierId      String
+  tier        FlavorTier        @relation(fields: [tierId], references: [id])
+  isSweet     Boolean           @default(false)
+  aliases     String[]
+  ingredients String[]
+  active      Boolean           @default(true)
+  sort        Int               @default(0)
+  sizePrices  FlavorSizePrice[]
+}
+
+model FlavorSizePrice {
+  id         String    @id @default(cuid())
+  flavorId   String
+  flavor     Flavor    @relation(fields: [flavorId], references: [id], onDelete: Cascade)
+  sizeId     String
+  size       PizzaSize @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+  priceCents Int
+
+  @@unique([flavorId, sizeId])
+}
+
+model Crust {
+  id     String       @id @default(cuid())
+  name   String
+  active Boolean      @default(true)
+  sort   Int          @default(0)
+  prices CrustPrice[]
+}
+
+model CrustPrice {
+  id         String    @id @default(cuid())
+  crustId    String
+  crust      Crust     @relation(fields: [crustId], references: [id], onDelete: Cascade)
+  sizeId     String
+  size       PizzaSize @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+  priceCents Int
+
+  @@unique([crustId, sizeId])
+}
+
+model Addon {
+  id     String       @id @default(cuid())
+  name   String
+  active Boolean      @default(true)
+  sort   Int          @default(0)
+  prices AddonPrice[]
+}
+
+model AddonPrice {
+  id         String    @id @default(cuid())
+  addonId    String
+  addon      Addon     @relation(fields: [addonId], references: [id], onDelete: Cascade)
+  sizeId     String
+  size       PizzaSize @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+  priceCents Int
+
+  @@unique([addonId, sizeId])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  name        String
+  description String?
+  priceCents  Int
+  /// Simple choice list, e.g. ["Coca-Cola", "Guaraná"]
+  options     String[]
+  active      Boolean  @default(true)
+  sort        Int      @default(0)
+}
+
+/// Pizza slot + optional product slot. Price = fixed priceCents.
+model Combo {
+  id               String   @id @default(cuid())
+  categoryId       String
+  category         Category @relation(fields: [categoryId], references: [id])
+  name             String
+  description      String?
+  priceCents       Int
+  pizzaSizeId      String?
+  allowedTierIds   String[]
+  extraPizzaSizeId String?
+  extraTierIds     String[]
+  drinkOptions     String[]
+  weekdays         Int[]
+  active           Boolean  @default(true)
+  sort             Int      @default(0)
+}
+
+model StoreCatalogOverride {
+  id         String         @id @default(cuid())
+  storeId    String
+  store      Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  targetType OverrideTarget
+  targetId   String
+  /// Only for TIER_PRICE / FLAVOR / CRUST / ADDON with per-size price. Empty string = all sizes.
+  sizeId     String         @default("")
+  priceCents Int?
+  available  Boolean        @default(true)
+  /// Item only offered by stores that have an exclusive override for it.
+  exclusive  Boolean        @default(false)
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([storeId, targetType, targetId, sizeId])
+}
+
+model Customer {
+  id                 String    @id @default(cuid())
+  phone              String    @unique
+  name               String
+  email              String?
+  marketingOptIn     Boolean   @default(false)
+  marketingOptInAt   DateTime?
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  orders             Order[]
+}
+
+model OrderCounter {
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  day     String
+  value   Int    @default(0)
+
+  @@id([storeId, day])
+}
+
+model Order {
+  id                    String        @id @default(cuid())
+  publicToken           String        @unique
+  number                String
+  storeId               String
+  store                 Store         @relation(fields: [storeId], references: [id])
+  customerId            String?
+  customer              Customer?     @relation(fields: [customerId], references: [id])
+  customerName          String
+  customerPhone         String
+  channel               Channel       @default(APP)
+  fulfillment           Fulfillment
+  status                OrderStatus
+  address               Json?
+  zoneId                String?
+  subtotalCents         Int
+  discountCents         Int           @default(0)
+  deliveryFeeCents      Int           @default(0)
+  totalCents            Int
+  paymentMethod         PaymentMethod
+  changeForCents        Int?
+  notes                 String?
+  routingDecision       Json?
+  transferredFromStoreId String?
+  idempotencyKey        String?       @unique
+  promisedAt            DateTime?
+  confirmedAt           DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  items                 OrderItem[]
+  events                OrderEvent[]
+  payments              Payment[]
+
+  @@index([storeId, status, createdAt])
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind           String
+  name           String
+  qty            Int
+  unitPriceCents Int
+  /// Snapshot of flavors / crust / addons / removals as shown to the kitchen.
+  details        Json
+  notes          String?
+}
+
+model OrderEvent {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  type        String
+  fromStatus  String?
+  toStatus    String?
+  data        Json?
+  actorUserId String?
+  at          DateTime @default(now())
+
+  @@index([orderId, at])
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  orderId      String
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method       PaymentMethod
+  status       PaymentStatus @default(PENDING)
+  amountCents  Int
+  provider     String
+  providerTxId String?       @unique
+  pixCopyPaste String?
+  expiresAt    DateTime?
+  paidAt       DateTime?
+  createdAt    DateTime      @default(now())
+}
+
+model User {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  name         String
+  passwordHash String
+  active       Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  assignments  StaffAssignment[]
+}
+
+model StaffAssignment {
+  id      String  @id @default(cuid())
+  userId  String
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role    Role
+  storeId String?
+  store   Store?  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role, storeId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  data      Json?
+  at        DateTime @default(now())
+}

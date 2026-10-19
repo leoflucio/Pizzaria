@@ -1,0 +1,37 @@
+# Sobe tudo localmente: docker compose up --build  → http://localhost:3000
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dnapoles
+      POSTGRES_PASSWORD: dnapoles
+      POSTGRES_DB: dnapoles
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dnapoles"]
+      interval: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+  app:
+    build: .
+    init: true
+    ports: ["3000:3000"]
+    environment:
+      DATABASE_URL: postgresql://dnapoles:dnapoles@db:5432/dnapoles
+      REDIS_URL: redis://redis:6379
+      APP_SECRET: ${APP_SECRET:-troque-este-segredo-local-123456}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      # Local: lojas sempre abertas e PIX simulado para testar a qualquer hora.
+      DEMO_ALWAYS_OPEN: ${DEMO_ALWAYS_OPEN:-true}
+      ENABLE_FAKE_PAYMENTS: ${ENABLE_FAKE_PAYMENTS:-true}
+      SEED_PASSWORD: ${SEED_PASSWORD:-dnapoles123}
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+volumes:
+  pgdata:
