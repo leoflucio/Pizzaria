@@ -93,11 +93,11 @@ export function OrderApp() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-2xl pb-32">
-      <header className="sticky top-0 z-30 bg-brand text-white shadow-md">
+      <header className="sticky top-0 z-30 border-b-4 border-brand bg-ink text-white shadow-md">
         <div className="flex items-center gap-3 px-4 py-3">
-          <img src="/icon.svg" alt="" className="h-10 w-10 rounded-xl" />
+          <img src="/logo.png" alt="" className="h-14 w-auto" />
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold leading-tight">{network?.name ?? "D'Napoles"}</h1>
+            <h1 className="text-xl font-extrabold leading-tight text-gold">{network?.name ?? "D'Napoles"}</h1>
             <p className="text-xs text-white/80">{network?.tagline ?? "Pizzaria"}</p>
           </div>
           {destination && store && (

@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #b91c1c;
-  --color-brand-dark: #7f1d1d;
-  --color-brand-soft: #fef2f2;
+  /* Cores da logomarca D'Napoles */
+  --color-brand: #e3122f;
+  --color-brand-dark: #b00e26;
+  --color-brand-soft: #fde8eb;
+  --color-ink: #000000;
+  --color-gold: #fad24c;
+  --color-leaf: #2bb24c;
   --color-cream: #fffbf5;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }

@@ -15,9 +15,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main className="grid min-h-dvh place-items-center px-4">
       <form action={doLogin} className="card grid w-full max-w-sm gap-4 p-6">
-        <div className="flex items-center gap-3">
-          <img src="/icon.svg" alt="" className="h-10 w-10 rounded-xl" />
-          <h1 className="text-xl font-extrabold">Painel D&apos;Napoles</h1>
+        <div className="-mx-6 -mt-6 grid place-items-center gap-2 rounded-t-2xl border-b-4 border-brand bg-ink px-6 py-5">
+          <img src="/logo.png" alt="Pizzaria D'Napoles" className="h-28 w-auto" />
+          <h1 className="text-lg font-extrabold text-gold">Painel da rede</h1>
         </div>
         <div>
           <label className="label" htmlFor="email">E-mail</label>

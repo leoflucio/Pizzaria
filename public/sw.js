@@ -1,6 +1,6 @@
 // Minimal service worker: app shell offline + network-first for everything else.
-const CACHE = "dnapoles-v1";
-const SHELL = ["/", "/manifest.webmanifest", "/icon.svg"];
+const CACHE = "dnapoles-v2";
+const SHELL = ["/", "/manifest.webmanifest", "/logo.png", "/icon-192.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -5,11 +5,11 @@ export const metadata: Metadata = {
   title: "D'Napoles — Peça sua pizza",
   description: "Peça pizza D'Napoles para entrega ou retirada em João Pessoa.",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/icon.svg", apple: "/icon.svg" },
-  appleWebApp: { capable: true, title: "D'Napoles", statusBarStyle: "default" },
+  icons: { icon: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }], apple: "/apple-icon.png" },
+  appleWebApp: { capable: true, title: "D'Napoles", statusBarStyle: "black" },
 };
 
-export const viewport: Viewport = { themeColor: "#b91c1c", width: "device-width", initialScale: 1, viewportFit: "cover" };
+export const viewport: Viewport = { themeColor: "#000000", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

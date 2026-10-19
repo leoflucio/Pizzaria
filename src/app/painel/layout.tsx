@@ -14,9 +14,9 @@ export default async function PainelLayout({ children }: { children: React.React
   const kitchenOnly = s.assignments.every((a) => a.role === "KITCHEN");
   return (
     <div className="min-h-dvh bg-stone-100">
-      <header className="bg-stone-900 text-white">
+      <header className="border-b-4 border-brand bg-ink text-white">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2">
-          <Link href="/painel" className="flex items-center gap-2 font-extrabold"><img src="/icon.svg" alt="" className="h-8 w-8 rounded-lg" />D&apos;Napoles</Link>
+          <Link href="/painel" className="flex items-center gap-2 font-extrabold"><img src="/logo.png" alt="" className="h-10 w-auto" /><span className="text-gold">D&apos;Napoles</span></Link>
           <nav className="flex flex-wrap gap-1 text-sm">
             {stores.map((st) => (
               <span key={st.id} className="flex items-center rounded-lg bg-white/10">
