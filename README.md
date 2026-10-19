@@ -59,14 +59,15 @@ A mesma imagem Docker roda em qualquer nuvem. Precisa de: um Postgres 16, um Red
 
 O container aplica as migrações e o seed (só se o banco estiver vazio) ao iniciar. Health check: `GET /api/health`.
 
-### Opção A — Railway (mais simples)
+### Teste gratuito — Render (link público, sem cartão)
 1. Suba este código para um repositório no GitHub.
-2. No Railway: New Project → Deploy from GitHub repo (ele usa o `Dockerfile`).
-3. Adicione os serviços PostgreSQL e Redis no mesmo projeto; em Variables do app, use `DATABASE_URL=${{Postgres.DATABASE_URL}}` e `REDIS_URL=${{Redis.REDIS_URL}}` e as demais da tabela.
-4. Em Settings → Networking, gere o domínio ou aponte o seu.
+2. Em render.com, entre com o GitHub e clique em **New → Blueprint**, escolhendo o repositório. O `render.yaml` cria o app e o banco no plano gratuito.
+3. Ao terminar, o Render mostra o link `https://dnapoles-xxxx.onrender.com`.
 
-### Opção B — Render
-Web Service (Docker) + Render Postgres + Render Key Value (Redis), com as mesmas variáveis.
+Limites do plano gratuito: o app "dorme" após 15 min sem acesso (o primeiro acesso depois disso leva cerca de 1 min) e o Postgres gratuito expira em 30 dias.
+
+### Outras opções pagas (Railway, Fly.io etc.)
+A mesma imagem Docker funciona; basta configurar as variáveis acima.
 
 ### Opção C — VPS no Brasil (ex.: Hostinger, Magalu Cloud, AWS São Paulo)
 Instale Docker, copie o projeto, crie um `.env` com as variáveis de produção e rode `docker compose up -d --build`, com um proxy HTTPS (Caddy ou Nginx) na frente. Faça backup diário do volume `pgdata`.

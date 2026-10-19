@@ -5,7 +5,7 @@ const schema = z.object({
   DATABASE_URL: z.string().optional(),
   REDIS_URL: z.string().optional(),
   APP_SECRET: z.string().min(16).default("dev-secret-change-me-please"),
-  APP_URL: z.string().url().default("http://localhost:3000"),
+  APP_URL: z.string().url().default(process.env.RENDER_EXTERNAL_URL ?? "http://localhost:3000"),
   DEMO_ALWAYS_OPEN: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
   ENABLE_FAKE_PAYMENTS: z.enum(["true", "false"]).default("true").transform((v) => v === "true"),
   GEOCODER: z.enum(["none", "nominatim"]).default("none"),
